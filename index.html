@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Team Compass</title>
+<meta name="description" content="Комплексное тестирование сотрудников">
+<meta name="theme-color" content="#2f5bd3">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Team Compass">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<style>
+  :root { --bg: #f6f5f1; --fg: #1d1f24; --muted: #6a6f78; --accent: #2f5bd3; color-scheme: light; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #14161a; --fg: #e9eaee; --muted: #9aa0ab; --accent: #7c9cff; color-scheme: dark; } }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--fg); font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  #app { position: fixed; inset: 0; width: 100%; height: 100%; border: 0; display: block;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) 0 env(safe-area-inset-left); box-sizing: border-box; background: var(--bg); }
+  .screen { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 24px; text-align: center; }
+  .screen img { width: 96px; height: 96px; border-radius: 22px; }
+  .screen p { margin: 0; max-width: 420px; color: var(--muted); }
+  .screen b { color: var(--fg); }
+  .spin { width: 28px; height: 28px; border-radius: 50%; border: 3px solid color-mix(in srgb, var(--accent) 25%, transparent); border-top-color: var(--accent); animation: s 0.9s linear infinite; }
+  @keyframes s { to { transform: rotate(360deg); } }
+  [hidden] { display: none !important; }
+</style>
+</head>
+<body>
+<div class="screen" id="loading"><img src="icon-192.png" alt=""><b>Team Compass</b><div class="spin" aria-label="Загрузка"></div></div>
+<div class="screen" id="setup" hidden><img src="icon-192.png" alt=""><b>Приложение ещё не настроено</b>
+  <p>Откройте файл <b>config.js</b> и вставьте в него адрес веб-приложения Google (заканчивается на /exec).</p></div>
+<div class="screen" id="offline" hidden><img src="icon-192.png" alt=""><b>Нет подключения к интернету</b>
+  <p>Тест открывается через интернет. Проверьте связь — страница обновится сама.</p></div>
+<iframe id="app" title="Team Compass" hidden allow="clipboard-write" referrerpolicy="no-referrer-when-downgrade"></iframe>
+<script src="config.js"></script>
+<script>
+(function () {
+  var base = String(window.TC_APP_URL || '').trim();
+  var show = function (id) { ['loading', 'setup', 'offline'].forEach(function (x) { document.getElementById(x).hidden = x !== id; }); };
+  if (!/^https:\/\/script\.google(usercontent)?\.com\//.test(base)) { show('setup'); return; }
+  if (!navigator.onLine) { show('offline'); window.addEventListener('online', function () { location.reload(); }); return; }
+  // Параметры ссылки (?org=…, ?admin=1, ?u=…) передаём приложению как есть.
+  var frame = document.getElementById('app');
+  frame.src = base + (location.search ? (base.indexOf('?') < 0 ? '?' : '&') + location.search.slice(1) : '');
+  frame.addEventListener('load', function () { show(null); frame.hidden = false; });
+  setTimeout(function () { show(null); frame.hidden = false; }, 15000);
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function () { /* без офлайна */ });
+})();
+</script>
+</body>
+</html>
